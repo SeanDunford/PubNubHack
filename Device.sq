@@ -1,10 +1,13 @@
 
-n <- hardware.pin1
+button <- hardware.pin1
 led <- hardware.pin9;
 led.configure(DIGITAL_OUT);
 state <- 0
 discoMode <- false
- 
+
+agent.on("led", function(state) {
+    setLed(state); 
+}); 
 function buttonPress(){
     local state = button.read(); 
     if (state == 1){server.log("Release");} 
@@ -16,6 +19,7 @@ function buttonPress(){
 function setLed(ledState) {
   server.log("Set LED: " + ledState);
   led.write(ledState);
+   agent.send("light", ledState);
 }
 function flipLed(){
     state = 1-state; 

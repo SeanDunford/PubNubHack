@@ -41,12 +41,12 @@ CTYPE html>
 
 
 		var pubnub = PUBNUB.init({
-    		publish_key   : 'pub-c-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-        	subscribe_key : 'pub-c-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    		publish_key   : 'pub-c-9dc1eb9d-9b40-41f2-9245-11677f3ea28d',
+        	subscribe_key : 'sub-c-785c37d6-3601-11e4-afa1-02ee2ddab7fe'
 	    });
  
     	pubnub.subscribe({
-        	channel : "pb1IvFPBdxji-lightLevel",
+        	channel : "231b53b236a7c9ee-lightLevel",
 	        message : function(m){ 
 	        	if (m.light <= 25) {
 					setLightDisplay("black", "white", m.light);
@@ -60,8 +60,9 @@ CTYPE html>
 	    });
 
      	function setLed(s) {
+     		console.log('setDatLed'); 
         	pubnub.publish({
-	        	channel : "xxxxxxxxxx-ledState",
+	        	channel : "231b53b236a7c9ee-ledState",
     		    message : "{ \"state\": " + s + " }"
 			});
 	    }
