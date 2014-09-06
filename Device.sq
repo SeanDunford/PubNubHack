@@ -1,51 +1,99 @@
 button <- hardware.pin1
 led <- hardware.pin9;
 led.configure(DIGITAL_OUT);
-state <- 0
 discoMode <- false
+ledState <- 0
 
+runTime <- 0.5
 startTime <- "8am"
 endTime <- "8pm"
-interval <- "3secs"
+interval <- 5000
 reminderInterval <- "2secs"
+currentHour <- 0
+beginHour <-0
+endHour <-0
+runState <- 0
+lastTime <- 0
+nextTime <- 1
+repeat <- true
+states <- ["initRun", 
+          "checkTimes", 
+          "timerOver"]
 
 function run(){
-    
+  if(runState == 0){initRun(); }
+  else if(runState == 1){ checkTimers();}
+  else if(runState == 2){ timerOver();}
+  else {
+    server.log("fuck");
+  }
+  flipLed();
+  imp.wakeup(runTime, run); 
 }
+function initRun(){
+  lastTime = hardware.millis(); 
+  nextTime = lastTime + interval; 
+  currentHour = date().hour; 
+  startTime = 16; //8am PST == 4pm UTC (the same day)
+  endTime = 4;   //8pm PST == 4am UTC (the next day)
+  runState = 1; 
+  if(currentHour < startTime &&
+    currentHour > endTime){
+    server.log("Timer only runs between the hours of " + startTime + " and " + endTime); 
+    runState = 0; 
+    return; 
+  }
+  runState =1; 
+}
+function checkTimers(){
+  lastTime = hardware.millis(); 
+  if(lastTime >= nextTime){
+    server.log("event time has passed");
+    agent.send("timesUp");  
+    nextTime = lastTime + interval;
+    runState = 2; 
+  }
+}
+function timerOver(){
+  // if(someShit(0)){
+  //     runState = 1;     
+  // }
+  if(repeat){
+      runState = 1;     
+  }
+}
+
 function buttonPress(){
-    local state = button.read(); 
-    if (state == 1){server.log("Release");} 
+    local btnState = button.read(); 
+    if (btnState == 1){server.log("btn Release");} 
     else{
-        server.log("Press");
-        flipLed()
+        server.log("btn Presssed");
+        agent.send("btnPress"); 
+        initRun(); 
     }
 }
 function setLed(ledState) {
-  server.log("Set LED: " + ledState);
   led.write(ledState);
    agent.send("light", ledState);
 }
 function flipLed(){
-    state = 1-state; 
-    setLed(state)
+    ledState = 1-ledState; 
+    setLed(ledState)
 }
 function setMode (mode){discoMode = mode;}
 function disco(){
     if(discoMode){
-        state = 1-state; 
-        led.write(state);
+      flipLed(); 
     } 
     imp.wakeup(0.1, disco); 
 }
 disco(); 
 run(); 
 // register a handler for "led" messages from the agent
-agent.on("led", function(state) {
-    server.log("device received agent led event"); 
-    setLed(state); 
+agent.on("led", function(ledstate) {
+    setLed(ledstate); 
 }); 
 agent.on("disco", function(disco){
-    server.log("device received agent disco event"); 
     setMode(disco);
 });
 button.configure(DIGITAL_IN_PULLUP, buttonPress); 
