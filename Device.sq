@@ -1,13 +1,17 @@
-
 button <- hardware.pin1
 led <- hardware.pin9;
 led.configure(DIGITAL_OUT);
 state <- 0
 discoMode <- false
 
-agent.on("led", function(state) {
-    setLed(state); 
-}); 
+startTime <- "8am"
+endTime <- "8pm"
+interval <- "3secs"
+reminderInterval <- "2secs"
+
+function run(){
+    
+}
 function buttonPress(){
     local state = button.read(); 
     if (state == 1){server.log("Release");} 
@@ -34,7 +38,14 @@ function disco(){
     imp.wakeup(0.1, disco); 
 }
 disco(); 
+run(); 
 // register a handler for "led" messages from the agent
-agent.on("led", setLed);
-agent.on("disco", setMode); 
+agent.on("led", function(state) {
+    server.log("device received agent led event"); 
+    setLed(state); 
+}); 
+agent.on("disco", function(disco){
+    server.log("device received agent disco event"); 
+    setMode(disco);
+});
 button.configure(DIGITAL_IN_PULLUP, buttonPress); 

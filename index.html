@@ -1,4 +1,3 @@
-CTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -17,25 +16,25 @@ CTYPE html>
     <![endif]-->
   </head>
   <body style="margin: 0px; height: 100%; width: 100%">
-    <div style="position:absolute; top: 0px; height: 30%; width: 100%; background-color: red" id="lightlevel">
+    <div style="background-color: red" id="lightlevel">
     	<div style="font-size: 72px; text-align: center; margin-top: 20px;" id="lighttext">Unknown</div>
     </div>
-	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+	<div style="top: 30%; width: 100%; text-align:center;">
 		<h1>LED Control</h1>
 		<div class="btn-group">
-			<button id="btn_on" type="button" class="btn btn-default" >On</button>
-			<button id="btn_off" type="button" class="btn btn-default" >Off</button>
+			<button id="LED_on" type="button" class="btn btn-default" >On</button>
+			<button id="LED_off" type="button" class="btn btn-default" >Off</button>
 		</div>
 	</div>
 
-	<div style="position:absolute; top: 0px; height: 30%; width: 100%; background-color: red" id="disco">
+	<div style="background-color: red" id="disco">
     	<div style="font-size: 72px; text-align: center; margin-top: 20px;" id="lighttext">Unknown</div>
     </div>
-	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+	<div style="text-align:center;">
 		<h1>Disco Control</h1>
 		<div class="btn-group">
-			<button id="btn_on" type="button" class="btn btn-default" >On</button>
-			<button id="btn_off" type="button" class="btn btn-default" >Off</button>
+			<button id="DISCO_on" type="button" class="btn btn-default" >On</button>
+			<button id="DISCO_off" type="button" class="btn btn-default" >Off</button>
 		</div>
 	</div>
 
@@ -50,8 +49,6 @@ CTYPE html>
 			$("#lightlevel").css("color", color);
 			$("#lighttext").html(text);
 		}
-
-
 		var pubnub = PUBNUB.init({
     		publish_key   : 'pub-c-9dc1eb9d-9b40-41f2-9245-11677f3ea28d',
         	subscribe_key : 'sub-c-785c37d6-3601-11e4-afa1-02ee2ddab7fe'
@@ -62,16 +59,13 @@ CTYPE html>
 	        message : function(m){ 
 	        	console.log('i got that shit'); 
 	        	if (m.light <= 25) {
-					setLightDisplay("black", "white", m.light);
 	        	} else if (m.light < 75) {
 	        		setLightDisplay("grey", "black", m.light);
 	        	} else {
 	        		setLightDisplay("white", "black", m.light);
 	        	}
 	        },
-
 	    });
-
      	function setLed(s) {
      		console.log('setDatLed'); 
         	pubnub.publish({
@@ -79,9 +73,35 @@ CTYPE html>
     		    message : "{ \"state\": " + s + " }"
 			});
 	    }
+     	function setDisco(m) {
+     		console.log('setMode'); 
+        	pubnub.publish({
+	        	channel : "231b53b236a7c9ee-discoState",
+    		    message : "{ \"state\": " + m + " }"
+			});
+	    }
+	        	pubnub.subscribe({
+        	channel : "231b53b236a7c9ee-lightLevel",
+	        message : function(m){ 
+	        	console.log('i got that shit'); 
+	        	if (m.light <= 25) {
+	        	} else if (m.light < 75) {
+	        		setLightDisplay("grey", "black", m.light);
+	        	} else {
+	        		setLightDisplay("white", "black", m.light);
+	        	}
+	        },
+	    });
 
-		$("#btn_on").click(function() { setLed(1); });
-		$("#btn_off").click(function() { setLed(0); });
+
+
+
+		$("#LED_on").click(function() { setLed(1); });
+		$("#LED_off").click(function() { setLed(0); });
+		$("#DISCO_on").click(function() { setDisco(1); });
+		$("#DISCO_off").click(function() { setDisco(0); });
+
+
 	 })();</script>
   </body>
 </html>

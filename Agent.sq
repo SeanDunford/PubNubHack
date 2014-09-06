@@ -3,9 +3,10 @@ const PUBKEY = "pub-c-9dc1eb9d-9b40-41f2-9245-11677f3ea28d";                // s
 const SUBKEY = "sub-c-785c37d6-3601-11e4-afa1-02ee2ddab7fe";                // set your subscribe key
 const SECRETKEY = "sec-c-ZWE4YWIwMWEtMmJkYy00ODlmLTllOTQtZGZlMjczOTM4MTcw"; // your secret key
 
-channelBase <- split(http.agenturl(), "/").pop();
+channelBase <- "231b53b236a7c9ee";
 lightLevelChannel <- channelBase + "-lightLevel";
 ledStateChannel <- channelBase + "-ledState";
+discoStateChannel <- channelBase + "-discoState"
 
 
 class PubNub {
@@ -308,16 +309,19 @@ server.log("Turn LED On: " + http.agenturl() + "?led=int");
 server.log("set blink mode: " + http.agenturl() + "?blink=int"); 
 server.log(lightLevelChannel);
 server.log(ledStateChannel);
+server.log(discoStateChannel);  
  
 //PubNumbs 
 device.on("light", function(lightlevel) {
+    server.log("agent received device led event");  
     pubnub.publish(lightLevelChannel, { light = lightlevel});
+    server.log("agent posted pubnub led event");  
 }); 
 pubnub.subscribe([ledStateChannel], function(err, result, tt) {
-    // make sure there's data
     if(result != null && ledStateChannel in result) {
         try {
             // try grabbing the state variable from the data and send it to the device
+            server.log("agent received pubnub led event"); 
             local data = http.jsondecode(result[ledStateChannel]);
             if ("state" in data) {
                 device.send("led", data["state"].tointeger());
@@ -328,6 +332,28 @@ pubnub.subscribe([ledStateChannel], function(err, result, tt) {
         }            
     }
 });
+device.on("disco", function(mode) {
+    server.log("agent received device event disco"); 
+    pubnub.publish(discoStateChannel, { disco = discoState});
+    server.log("agent posted pubnub disco event");  
+}); 
+pubnub.subscribe([discoStateChannel], function(err, result, tt) {
+    // make sure there's data
+    if(result != null && discoStateChannel in result) {
+        try {
+            server.log("agent received pubnub disco event");    
+            local data = http.jsondecode(result[discoStateChannel]);
+            if ("state" in data) {
+                server.log("sending disco event to device");     
+                device.send("disco", data["state"].tointeger());
+            }
+        } catch(ex) {
+            // log any errors we get
+            server.log("Error - " + ex);
+        }            
+    }
+});
+
 //HTTP Stuff 
 function requestHandler(request, response) {
   try {
