@@ -1,0 +1,36 @@
+
+n <- hardware.pin1
+led <- hardware.pin9;
+led.configure(DIGITAL_OUT);
+state <- 0
+discoMode <- false
+ 
+function buttonPress(){
+    local state = button.read(); 
+    if (state == 1){server.log("Release");} 
+    else{
+        server.log("Press");
+        flipLed()
+    }
+}
+function setLed(ledState) {
+  server.log("Set LED: " + ledState);
+  led.write(ledState);
+}
+function flipLed(){
+    state = 1-state; 
+    setLed(state)
+}
+function setMode (mode){discoMode = mode;}
+function disco(){
+    if(discoMode){
+        state = 1-state; 
+        led.write(state);
+    } 
+    imp.wakeup(0.1, disco); 
+}
+disco(); 
+// register a handler for "led" messages from the agent
+agent.on("led", setLed);
+agent.on("disco", setMode); 
+button.configure(DIGITAL_IN_PULLUP, buttonPress); 

@@ -1,0 +1,26 @@
+erver.log("Turn LED On: " + http.agenturl() + "?led=1");
+server.log("Turn LED Off: " + http.agenturl() + "?led=0");
+ 
+function requestHandler(request, response) {
+  try {
+    if ("led" in request.query) {
+      if (request.query.led == "1" || request.query.led == "0") {
+        local ledState = request.query.led.tointeger();
+        device.send("led", ledState); 
+      }
+    }
+    else if("disco" in request.query){
+        local discoState = request.query.disco.tointeger(); 
+        device.send("disco", discoState); 
+    } 
+     
+     
+     
+     response.send(200, "OK");
+  } catch (ex) {
+    response.send(500, "Internal Server Error: " + ex);
+  }
+}
+ 
+// register the HTTP handler
+http.onrequest(requestHandler);
