@@ -28,6 +28,18 @@ CTYPE html>
 		</div>
 	</div>
 
+	<div style="position:absolute; top: 0px; height: 30%; width: 100%; background-color: red" id="disco">
+    	<div style="font-size: 72px; text-align: center; margin-top: 20px;" id="lighttext">Unknown</div>
+    </div>
+	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+		<h1>Disco Control</h1>
+		<div class="btn-group">
+			<button id="btn_on" type="button" class="btn btn-default" >On</button>
+			<button id="btn_off" type="button" class="btn btn-default" >Off</button>
+		</div>
+	</div>
+
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" ></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js" ></script>
 	<script src="https://cdn.pubnub.com/pubnub.min.js" ></script>
@@ -48,6 +60,7 @@ CTYPE html>
     	pubnub.subscribe({
         	channel : "231b53b236a7c9ee-lightLevel",
 	        message : function(m){ 
+	        	console.log('i got that shit'); 
 	        	if (m.light <= 25) {
 					setLightDisplay("black", "white", m.light);
 	        	} else if (m.light < 75) {
