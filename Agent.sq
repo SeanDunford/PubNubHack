@@ -309,10 +309,19 @@ server.log("set blink mode: " + http.agenturl() + "?blink=int");
 server.log(lightLevelChannel);
 server.log(ledStateChannel);
  
-//PubNumbs 
+//PubNumbs
+device.on("name", function(name) {
+     pubnub.publish(lightLevelChannel, { name = name});
+});
 device.on("light", function(lightlevel) {
     pubnub.publish(lightLevelChannel, { light = lightlevel});
-}); 
+});
+
+device.onconnect(function() {
+    server.log("Device connected!");
+    pubnub.publish(lightLevelChannel, { light = 0});
+});
+
 pubnub.subscribe([ledStateChannel], function(err, result, tt) {
     // make sure there's data
     if(result != null && ledStateChannel in result) {
@@ -322,30 +331,45 @@ pubnub.subscribe([ledStateChannel], function(err, result, tt) {
             if ("state" in data) {
                 device.send("led", data["state"].tointeger());
             }
+            
+            if ("name" in data) {
+                device.send("name", data["name"]);
+            }
+            
+            if ("interval" in data) {
+                server.log("interval!" + data["interval"]);
+                device.send("interval", data["interval"]);
+            }
         } catch(ex) {
             // log any errors we get
-            server.log("Error - " + ex);
-        }            
+            server.log("Error - " + ex + result[ledStateChannel]);
+        }
     }
 });
-//HTTP Stuff 
+
+server.log("Turn LED On: " + http.agenturl() + "?led=1");
+server.log("Turn LED Off: " + http.agenturl() + "?led=0");
+
 function requestHandler(request, response) {
   try {
     if ("led" in request.query) {
       if (request.query.led == "1" || request.query.led == "0") {
         local ledState = request.query.led.tointeger();
-        device.send("led", ledState); 
+        device.send("led", ledState);
       }
     }
     else if("disco" in request.query){
-        local discoState = request.query.disco.tointeger(); 
-        device.send("disco", discoState); 
-    } 
+        local discoState = request.query.disco.tointeger();
+        device.send("disco", discoState);
+    }
+
+
+
      response.send(200, "OK");
   } catch (ex) {
     response.send(500, "Internal Server Error: " + ex);
   }
 }
- 
+
 // register the HTTP handler
 http.onrequest(requestHandler);

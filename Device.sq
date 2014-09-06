@@ -5,36 +5,80 @@ led.configure(DIGITAL_OUT);
 state <- 0
 discoMode <- false
 
-agent.on("led", function(state) {
-    setLed(state); 
-}); 
+settings <- {};
+settings.name <- hardware.getdeviceid();
+settings.interval <- {};
+settings.interval.low <- 7;
+settings.interval.high <- 23;
+discoMode <- false
+local _settings = server.load();
+
+if (_settings.len() != 0)
+{
+    settings = _settings;
+}
+
 function buttonPress(){
-    local state = button.read(); 
-    if (state == 1){server.log("Release");} 
+    local state = button.read();
+    if (state == 1){
+        server.log("Release");
+        agent.send("button", "released, yo!");
+    }
     else{
         server.log("Press");
-        flipLed()
+        //flipLed()
     }
 }
 function setLed(ledState) {
   server.log("Set LED: " + ledState);
   led.write(ledState);
-   agent.send("light", ledState);
 }
 function flipLed(){
-    state = 1-state; 
+    state = 1-state;
     setLed(state)
 }
 function setMode (mode){discoMode = mode;}
 function disco(){
     if(discoMode){
-        state = 1-state; 
+        state = 1-state;
         led.write(state);
-    } 
-    imp.wakeup(0.1, disco); 
+    }
+    imp.wakeup(0.1, disco);
 }
-disco(); 
+disco();
 // register a handler for "led" messages from the agent
+agent.send("name", settings.name);
+agent.on("name", function(name) {
+    server.log("renamed: " + name);
+    settings.name = name;
+    local err = server.save(settings);
+    if (err == 0)
+    {
+        server.log("Settings saved");
+    }
+    else
+    {
+        server.log("Settings not saved. Error: " + err.tostring());
+    }
+    agent.send("name", settings.name);
+});
+agent.on("interval", function(data) {
+    if (!("interval" in settings)) {
+        settings.interval <- {};
+    }
+    settings.interval = data;
+    local err = server.save(settings);
+    if (err == 0)
+    {
+        server.log("Settings saved");
+    }
+    else
+    {
+        server.log("Settings not saved. Error: " + err.tostring());
+    }
+    //agent.send("intervalreset", settings.interval);
+});
+
 agent.on("led", setLed);
-agent.on("disco", setMode); 
-button.configure(DIGITAL_IN_PULLUP, buttonPress); 
+agent.on("disco", setMode);
+button.configure(DIGITAL_IN_PULLUP, buttonPress);

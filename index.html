@@ -21,23 +21,35 @@ CTYPE html>
     	<div style="font-size: 72px; text-align: center; margin-top: 20px;" id="lighttext">Unknown</div>
     </div>
 	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+		<span style="font-size: 72px; text-align: center; margin-top: 20px;" id="device">no device</span>
 		<h1>LED Control</h1>
 		<div class="btn-group">
 			<button id="btn_on" type="button" class="btn btn-default" >On</button>
 			<button id="btn_off" type="button" class="btn btn-default" >Off</button>
 		</div>
 	</div>
+	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+		<span>Change device name</span>
+		<input type="text" id="newDeviceName" ></input>
+		<button type="button" class="btn btn-default" id="btn_rename">Rename</button> 
+		
+	</div>
+	<!--<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+		<input type="number" id="timeLow" min="0" max="24"/>
+		<input type="number" id="timeHigh" min="0" max="24"/>
+		<button type="button" class="btn btn-default" id="btn_resetInterval">Reset</button> 
+	</div>-->
 
 	<div style="position:absolute; top: 0px; height: 30%; width: 100%; background-color: red" id="disco">
     	<div style="font-size: 72px; text-align: center; margin-top: 20px;" id="lighttext">Unknown</div>
     </div>
-	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+	<!--<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
 		<h1>Disco Control</h1>
 		<div class="btn-group">
 			<button id="btn_on" type="button" class="btn btn-default" >On</button>
 			<button id="btn_off" type="button" class="btn btn-default" >Off</button>
 		</div>
-	</div>
+	</div>-->
 
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" ></script>
@@ -58,8 +70,12 @@ CTYPE html>
 	    });
  
     	pubnub.subscribe({
-        	channel : "231b53b236a7c9ee-lightLevel",
+        	channel : "3462UPQXhaDg-lightLevel",
 	        message : function(m){ 
+	        	if(m.name) {
+	        		$("#device").text(m.name);
+	        		return;
+	        	}
 	        	console.log('i got that shit'); 
 	        	if (m.light <= 25) {
 					setLightDisplay("black", "white", m.light);
@@ -75,13 +91,36 @@ CTYPE html>
      	function setLed(s) {
      		console.log('setDatLed'); 
         	pubnub.publish({
-	        	channel : "231b53b236a7c9ee-ledState",
+	        	channel : "3462UPQXhaDg-ledState",
     		    message : "{ \"state\": " + s + " }"
 			});
 	    }
 
 		$("#btn_on").click(function() { setLed(1); });
 		$("#btn_off").click(function() { setLed(0); });
+		$("#btn_rename").click(function() {
+			var newName = $("#newDeviceName").val();
+			pubnub.publish({
+	        	channel : "3462UPQXhaDg-ledState",
+    		    message : JSON.stringify({"name": newName})
+			});
+		});
+		$("#btn_resetInterval").click(function() {
+			var low = $("#timeLow").val();
+			var high = $("#timeHigh").val();
+			try {
+				low = parseInt(low);
+				high = parseInt(high);
+				if (low >= high) throw new Error("Hey that interval's not right!");
+			} catch(e) {
+				alert(e);
+			}
+
+			pubnub.publish({
+	        	channel : "3462UPQXhaDg-ledState",
+    		    message : JSON.stringify({"interval": {low: low, high: high}})
+			});
+		});
 	 })();</script>
   </body>
 </html>
