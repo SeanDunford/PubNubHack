@@ -7,7 +7,14 @@ channelBase <- split(http.agenturl(), "/").pop();
 lightLevelChannel <- channelBase + "-lightLevel";
 ledStateChannel <- channelBase + "-ledState";
 discoStateChannel <- channelBase + "-discoState"
+nameChannel <- channelBase +"-name"
 
+channels <- [
+  lightLevelChannel, 
+  ledStateChannel, 
+  discoStateChannel, 
+  nameChannel
+]
 
 class PubNub {
     _pubNubBase = "https://pubsub.pubnub.com";
@@ -310,6 +317,7 @@ server.log("set blink mode: " + http.agenturl() + "?blink=int");
 server.log("lightChannel: " + lightLevelChannel);
 server.log("ledStateChannel: " + ledStateChannel);
 server.log("discoStateChannel: " + discoStateChannel);  
+server.log("nameChannel: "+nameChannel);
  
 //PubNumbs
 device.on("name", function(name) {
@@ -323,22 +331,28 @@ device.onconnect(function() {
     server.log("Device connected!");
     pubnub.publish(lightLevelChannel, { light = 0});
 });
-
-pubnub.subscribe([ledStateChannel], function(err, result, tt) {
-  server.log("agent ledState event from Pubnub "); 
-    if(result != null && ledStateChannel in result) {
+pubnub.subscribe(channels, function(err, result, tt){
+  server.log("i got the request"); 
+    if(result != null && nameChannel in result){
+      local data = http.jsondecode(result[nameChannel]);
+      if ("name" in data) {
+        server.log("sending name");
+        device.send("name", data["name"]);
+      }
+    }
+    else if(result != null && ledStateChannel in result) {
         try {
             // try grabbing the state variable from the data and send it to the device
             local data = http.jsondecode(result[ledStateChannel]);
             if ("state" in data) {
                 device.send("led", data["state"].tointeger());
             }
-            
+
             if ("name" in data) {
                 server.log("sending name");
                 device.send("name", data["name"]);
             }
-            
+
             if ("interval" in data) {
                 server.log("interval!" + data["interval"]);
                 device.send("interval", data["interval"]);
@@ -348,13 +362,7 @@ pubnub.subscribe([ledStateChannel], function(err, result, tt) {
             server.log("Error - " + ex + result[ledStateChannel]);
         }
     }
-});
-device.on("disco", function(mode) {
-    pubnub.publish(discoStateChannel, { disco = discoState});
-}); 
-pubnub.subscribe([discoStateChannel], function(err, result, tt) {
-    // make sure there's data
-    if(result != null && discoStateChannel in result) {
+    else if(result != null && discoStateChannel in result) {
         try {
             local data = http.jsondecode(result[discoStateChannel]);
             if ("state" in data) {
@@ -363,9 +371,12 @@ pubnub.subscribe([discoStateChannel], function(err, result, tt) {
         } catch(ex) {
             // log any errors we get
             server.log("Error - " + ex);
-        }            
+        }
     }
-});
+}); 
+device.on("disco", function(mode) {
+    pubnub.publish(discoStateChannel, { disco = discoState});
+}); 
 //HTTP Stuff 
 function requestHandler(request, response) {
   try {

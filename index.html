@@ -68,10 +68,10 @@
         	channel : base+"-lightLevel",
 	        message : function(m){ 
 	        	if(m.name) {
+	        		console.log('name event received from imp');
 	        		$("#device").text(m.name);
 	        		return;
 	        	}
-	        	console.log('i got that shit'); 
 	        	if (m.light <= 25) {
 	        	} else if (m.light < 75) {
 	        		setLightDisplay("grey", "black", m.light);
@@ -94,21 +94,6 @@
     		    message : "{ \"state\": " + m + " }"
 			});
 	    }
-	        	pubnub.subscribe({
-        	channel : base+"-lightLevel",
-	        message : function(m){ 
-	        	console.log('i got that shit'); 
-	        	if (m.light <= 25) {
-	        	} else if (m.light < 75) {
-	        		setLightDisplay("grey", "black", m.light);
-	        	} else {
-	        		setLightDisplay("white", "black", m.light);
-	        	}
-	        },
-	    });
-
-
-
 
 		$("#LED_on").click(function() { setLed(1); });
 		$("#LED_off").click(function() { setLed(0); });
@@ -119,7 +104,7 @@
 			console.log('channel: ' + base+"-ledState"); 
 			var newName = $("#newDeviceName").val();
 			pubnub.publish({
-	        	channel : base+"-ledState",
+	        	channel : base+"-name",
     		    message : JSON.stringify({"name": newName})
 			});
 		});
