@@ -62,7 +62,7 @@
 	<script>(function(){
 		var mihai = '3462UPQXhaDg'; 
 		var sean =  '4LRXkfNfpRY-'; 
-		var base = mihai; 
+		var base = sean; 
 		function setLightDisplay(bg, color, text) {
 			$("#lightlevel").css("background-color", bg);
 			$("#lightlevel").css("color", color);
@@ -76,16 +76,22 @@
     	pubnub.subscribe({
         	channel : base+"-name",
 	        message : function(m){ 
-	        	if (m.disconnect) {
+	        	var json = JSON.parse(m); 
+	        	console.log('json'); 
+	        	console.log(json);
+	        	if (json.disconnect) {
 	        		$("#"+m.name).remove();
 	        		return;
 	        	} 
-	        	if(m.name) {
-	        		$("#device").text(m.name);
+	        	if(json.name) {
+	        		$("#device").text(json.name);
 	        		if (!$("#"+m.name).length) {
 	        			$("#device_list").append('<a href="#" class="list-group-item" id="'+m.name+'">' + m.name + '</a>');	
 	        		}
 	        		return;
+	        	}
+	        	else{
+	        		alert('wtf m8'); 
 	        	}
 	        },
 	    });
