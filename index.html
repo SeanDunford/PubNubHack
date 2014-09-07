@@ -16,6 +16,15 @@
     <![endif]-->
   </head>
   <body style="margin: 0px; height: 100%; width: 100%">
+  	<div class="list-group" id="device_list">
+	  <a href="#" class="list-group-item active">
+	    Devices
+	  </a>
+	  
+	</div>
+    <!--<div style="position:absolute; top: 0px; height: 30%; width: 100%; background-color: red" id="lightlevel">
+    	<div style="font-size: 72px; text-align: center; margin-top: 20px;" id="lighttext">Unknown</div>
+    </div> -->
 	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
 		<span style="font-size: 72px; text-align: center; margin-top: 20px;" id="device">no device</span>
 		<h1>LED Control</h1>
@@ -43,7 +52,7 @@
 			<button id="DISCO_on" type="button" class="btn btn-default" >On</button>
 			<button id="DISCO_off" type="button" class="btn btn-default" >Off</button>
 		</div>
-	</div>-->
+	</div> -->
 
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" ></script>
@@ -53,7 +62,7 @@
 	<script>(function(){
 		var mihai = '3462UPQXhaDg'; 
 		var sean =  '4LRXkfNfpRY-'; 
-		var base = sean; 
+		var base = mihai; 
 		function setLightDisplay(bg, color, text) {
 			$("#lightlevel").css("background-color", bg);
 			$("#lightlevel").css("color", color);
@@ -67,10 +76,15 @@
     	pubnub.subscribe({
         	channel : base+"-name",
 	        message : function(m){ 
-	        	alert('name received');
+	        	if (m.disconnect) {
+	        		$("#"+m.name).remove();
+	        		return;
+	        	} 
 	        	if(m.name) {
-	        		console.log('name event received from imp');
 	        		$("#device").text(m.name);
+	        		if (!$("#"+m.name).length) {
+	        			$("#device_list").append('<a href="#" class="list-group-item" id="'+m.name+'">' + m.name + '</a>');	
+	        		}
 	        		return;
 	        	}
 	        },
