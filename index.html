@@ -74,7 +74,7 @@
 	    });
  
     	pubnub.subscribe({
-        	channel : base+"-lightLevel",
+        	channel : base+"-name",
 	        message : function(m){
 	        	if (m.disconnect) {
 	        		$("#"+m.name).remove();
@@ -87,14 +87,12 @@
 	        		}
 	        		return;
 	        	}
-	        	console.log('i got that shit'); 
-	        	if (m.light <= 25) {
-					setLightDisplay("black", "white", m.light);
-	        	} else if (m.light < 75) {
-	        		setLightDisplay("grey", "black", m.light);
-	        	} else {
-	        		setLightDisplay("white", "black", m.light);
-	        	}
+	        },
+	    });
+	    pubnub.subscribe({
+        	channel : base+"-btn",
+	        message : function(m){ 
+	        	alert('that button was pressed homie');
 	        },
 	    });
      	function setLed(s) {

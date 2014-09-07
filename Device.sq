@@ -4,13 +4,7 @@ led.configure(DIGITAL_OUT);
 discoMode <- false
 ledState <- 0
 runTime <- 0.5
-startTime <- "8am"
-endTime <- "8pm"
-interval <- 50000
-reminderInterval <- "2secs"
 currentHour <- 0
-beginHour <-0
-endHour <-0
 runState <- 0
 lastTime <- 0
 nextTime <- 1
@@ -19,19 +13,17 @@ states <- ["initRun",
           "checkTimes",
           "timerOver"]
 
+
 settings <- {};
-settings.name <- hardware.getdeviceid();
-settings.interval <- {};
-settings.interval.low <- 7;
-settings.interval.high <- 23;
-discoMode <- false
 local _settings = server.load();
 
 if (_settings.len() != 0)
 {
     settings = _settings;
 }
-
+else{
+    settings.poop; //crash
+}
 
 function run(){
   if(runState == 0){initRun(); }
@@ -44,27 +36,33 @@ function run(){
   imp.wakeup(runTime, run);
 }
 function initRun(){
-  lastTime = hardware.millis();
-  nextTime = lastTime + interval;
-  currentHour = date().hour;
-  startTime = 16; //8am PST == 4pm UTC (the same day)
-  endTime = 4;   //8pm PST == 4am UTC (the next day)
-  runState = 1;
-  if(currentHour < startTime &&
-    currentHour > endTime){
-    server.log("Timer only runs between the hours of " + startTime + " and " + endTime);
-    runState = 0;
-    return;
+    server.log("settings: " + settings); 
+  if(!settings || !settings.interval || 
+    !("itime" in settings.interval)){
+    server.log("poop no settings"); 
+    return; 
+  }
+  lastTime = hardware.millis(); 
+  nextTime = lastTime + settings.interval.itime; 
+  currentHour = date().hour; 
+  runState = 1; 
+  if(currentHour < settings.interval.low&&
+    currentHour > settings.interval.high){
+    server.log("Timer only runs between the hours of " + 
+        settings.interval.low + 
+        " and " + 
+        settings.interval.high); 
+    runState = 0; 
+    return; 
   }
   runState =1;
 }
 function checkTimers(){
   lastTime = hardware.millis();
   if(lastTime >= nextTime){
-    server.log("event time has passed");
-    // agent.send("timesUp");
-    nextTime = lastTime + interval;
-    runState = 2;
+    // agent.send("timesUp");  
+    nextTime = lastTime + settings.interval.itime;
+    runState = 2; 
   }
 }
 function timerOver(){
@@ -125,10 +123,14 @@ agent.on("name", function(name) {
     agent.send("name", settings.name);
 });
 agent.on("interval", function(data) {
+    server.log("data: " + data); 
     if (!("interval" in settings)) {
-        settings.interval <- {};
+        settings.interval = {};
     }
-    settings.interval = data;
+    settings.interval.low = data.low || 0;
+    settings.interval.low = data.high || 0;
+    settings.interval.low = data.itime || 0;
+
     local err = server.save(settings);
     if (err == 0)
     {

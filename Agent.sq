@@ -8,12 +8,14 @@ lightLevelChannel <- channelBase + "-lightLevel";
 ledStateChannel <- channelBase + "-ledState";
 discoStateChannel <- channelBase + "-discoState"
 nameChannel <- channelBase +"-name"
+buttonChannel <- channelBase +"-btn"
 
 channels <- [
-  lightLevelChannel,
-  ledStateChannel,
-  discoStateChannel,
-  nameChannel
+  lightLevelChannel, 
+  ledStateChannel, 
+  discoStateChannel, 
+  nameChannel, 
+  buttonChannel
 ]
 
 class PubNub {
@@ -320,24 +322,22 @@ server.log("lightChannel: " + lightLevelChannel);
 server.log("ledStateChannel: " + ledStateChannel);
 server.log("discoStateChannel: " + discoStateChannel);
 server.log("nameChannel: "+nameChannel);
-
+server.log("buttonChannel: "+buttonChannel); 
+ 
 //PubNumbs
 device.on("name", function(name) {
     deviceName = name;
     pubnub.publish(lightLevelChannel, { name = name});
 });
 device.on("light", function(lightlevel) {
-    pubnub.publish(lightLevelChannel, { light = lightlevel});
+  pubnub.publish(lightLevelChannel, { light = lightlevel});
 });
-
+device.on("button", function(press){
+  pubnub.publish(buttonChannel, {press = press});
+});
 device.onconnect(function() {
     server.log("Device connected!");
-    // pubnub.publish(lightLevelChannel, {});
-});
-
-device.ondisconnect(function() {
-    server.log("disconnected")
-    pubnub.publish(lightLevelChannel, { name = deviceName, disconnect=1});
+    pubnub.publish(lightLevelChannel, { light = 0});
 });
 pubnub.subscribe(channels, function(err, result, tt){
   server.log("i got the request");
