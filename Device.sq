@@ -21,9 +21,9 @@ if (_settings.len() != 0)
 {
     settings = _settings;
 }
-settings = _settings;
-server.log("the settings are low: " + settings.interval.itime); 
-
+else{
+    settings.poop; //crash
+}
 
 function run(){
   if(runState == 0){initRun(); }
@@ -60,7 +60,6 @@ function initRun(){
 function checkTimers(){
   lastTime = hardware.millis(); 
   if(lastTime >= nextTime){
-    server.log("event time has passed");
     // agent.send("timesUp");  
     nextTime = lastTime + settings.interval.itime;
     runState = 2; 

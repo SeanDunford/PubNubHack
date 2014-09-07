@@ -65,19 +65,19 @@
 	    });
  
     	pubnub.subscribe({
-        	channel : base+"-lightLevel",
+        	channel : base+"-name",
 	        message : function(m){ 
 	        	if(m.name) {
 	        		console.log('name event received from imp');
 	        		$("#device").text(m.name);
 	        		return;
 	        	}
-	        	if (m.light <= 25) {
-	        	} else if (m.light < 75) {
-	        		setLightDisplay("grey", "black", m.light);
-	        	} else {
-	        		setLightDisplay("white", "black", m.light);
-	        	}
+	        },
+	    });
+	    pubnub.subscribe({
+        	channel : base+"-btn",
+	        message : function(m){ 
+	        	alert('that button was pressed homie');
 	        },
 	    });
      	function setLed(s) {
