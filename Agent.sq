@@ -324,7 +324,7 @@ server.log("buttonChannel: "+buttonChannel);
  
 //PubNumbs
 device.on("name", function(name) {
-  pubnub.publish(lightLevelChannel, { name = name});
+  pubnub.publish(nameChannel, { name = name});
 });
 device.on("light", function(lightlevel) {
   pubnub.publish(lightLevelChannel, { light = lightlevel});

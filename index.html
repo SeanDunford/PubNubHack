@@ -67,6 +67,7 @@
     	pubnub.subscribe({
         	channel : base+"-name",
 	        message : function(m){ 
+	        	alert('name received');
 	        	if(m.name) {
 	        		console.log('name event received from imp');
 	        		$("#device").text(m.name);
@@ -74,12 +75,14 @@
 	        	}
 	        },
 	    });
-	    pubnub.subscribe({
+	    pubnub.subscribe(
+	    {
         	channel : base+"-btn",
 	        message : function(m){ 
 	        	alert('that button was pressed homie');
 	        },
-	    });
+	    }
+	    );
      	function setLed(s) {
      		console.log('setDatLed'); 
         	pubnub.publish({
