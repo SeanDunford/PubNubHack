@@ -63,7 +63,7 @@
 	<script>(function(){
 		var mihai = '3462UPQXhaDg'; 
 		var sean =  '4LRXkfNfpRY-'; 
-		var base = mihai; 
+		var base = sean; 
 		function setLightDisplay(bg, color, text) {
 			$("#lightlevel").css("background-color", bg);
 			$("#lightlevel").css("color", color);
@@ -102,7 +102,12 @@
 	    {
         	channel : base+"-btn",
 	        message : function(m){ 
-	        	alert('that button was pressed homie');
+	        	if(m.press){
+		        	alert('that button was pressed homie')	        		
+	        	}
+	        	else{
+		        	alert('that timer ended homie');
+	        	}
 	        },
 	    }
 	    );

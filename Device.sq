@@ -71,6 +71,7 @@ function timerOver(){
   // }
   if(repeat){
       runState = 1;
+      agent.send("button", false);
   }
 }
 
@@ -78,7 +79,7 @@ function buttonPress(){
     local btnState = button.read();
     if (btnState == 1){
         server.log("btn Release");
-        agent.send("button", "released, yo!");
+        agent.send("button", true);
         initRun();
     }
     else{
