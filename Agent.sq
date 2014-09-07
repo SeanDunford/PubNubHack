@@ -307,9 +307,9 @@ pubnub <- PubNub(PUBKEY, SUBKEY, SECRETKEY);
 //Log Endpoints
 server.log("Turn LED On: " + http.agenturl() + "?led=int");
 server.log("set blink mode: " + http.agenturl() + "?blink=int"); 
-server.log(lightLevelChannel);
-server.log(ledStateChannel);
-server.log(discoStateChannel);  
+server.log("lightChannel: " + lightLevelChannel);
+server.log("ledStateChannel: " + ledStateChannel);
+server.log("discoStateChannel: " + discoStateChannel);  
  
 //PubNumbs
 device.on("name", function(name) {
