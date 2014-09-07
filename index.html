@@ -16,27 +16,34 @@
     <![endif]-->
   </head>
   <body style="margin: 0px; height: 100%; width: 100%">
-    <div style="background-color: red" id="lightlevel">
-    	<div style="font-size: 72px; text-align: center; margin-top: 20px;" id="lighttext">Unknown</div>
-    </div>
-	<div style="top: 30%; width: 100%; text-align:center;">
+	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+		<span style="font-size: 72px; text-align: center; margin-top: 20px;" id="device">no device</span>
 		<h1>LED Control</h1>
 		<div class="btn-group">
 			<button id="LED_on" type="button" class="btn btn-default" >On</button>
 			<button id="LED_off" type="button" class="btn btn-default" >Off</button>
 		</div>
 	</div>
+	<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+		<span>Change device name</span>
+		<input type="text" id="newDeviceName" ></input>
+		<button type="button" class="btn btn-default" id="btn_rename">Rename</button> 
+		
+	</div>
+	<!--<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
+		<input type="number" id="timeLow" min="0" max="24"/>
+		<input type="number" id="timeHigh" min="0" max="24"/>
+		<button type="button" class="btn btn-default" id="btn_resetInterval">Reset</button> 
+	</div>-->
 
-	<div style="background-color: red" id="disco">
-    	<div style="font-size: 72px; text-align: center; margin-top: 20px;" id="lighttext">Unknown</div>
-    </div>
 	<div style="text-align:center;">
+	<!--<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
 		<h1>Disco Control</h1>
 		<div class="btn-group">
 			<button id="DISCO_on" type="button" class="btn btn-default" >On</button>
 			<button id="DISCO_off" type="button" class="btn btn-default" >Off</button>
 		</div>
-	</div>
+	</div>-->
 
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" ></script>
@@ -44,6 +51,9 @@
 	<script src="https://cdn.pubnub.com/pubnub.min.js" ></script>
 
 	<script>(function(){
+		var mihai = '3462UPQXhaDg'; 
+		var sean =  '4LRXkfNfpRY-'; 
+		var base = sean; 
 		function setLightDisplay(bg, color, text) {
 			$("#lightlevel").css("background-color", bg);
 			$("#lightlevel").css("color", color);
@@ -55,8 +65,12 @@
 	    });
  
     	pubnub.subscribe({
-        	channel : "231b53b236a7c9ee-lightLevel",
+        	channel : base+"-lightLevel",
 	        message : function(m){ 
+	        	if(m.name) {
+	        		$("#device").text(m.name);
+	        		return;
+	        	}
 	        	console.log('i got that shit'); 
 	        	if (m.light <= 25) {
 	        	} else if (m.light < 75) {
@@ -69,19 +83,19 @@
      	function setLed(s) {
      		console.log('setDatLed'); 
         	pubnub.publish({
-	        	channel : "231b53b236a7c9ee-ledState",
+	        	channel : base+"-ledState",
     		    message : "{ \"state\": " + s + " }"
 			});
 	    }
      	function setDisco(m) {
      		console.log('setMode'); 
         	pubnub.publish({
-	        	channel : "231b53b236a7c9ee-discoState",
+	        	channel : base+"-discoState",
     		    message : "{ \"state\": " + m + " }"
 			});
 	    }
 	        	pubnub.subscribe({
-        	channel : "231b53b236a7c9ee-lightLevel",
+        	channel : base+"-lightLevel",
 	        message : function(m){ 
 	        	console.log('i got that shit'); 
 	        	if (m.light <= 25) {
@@ -100,8 +114,31 @@
 		$("#LED_off").click(function() { setLed(0); });
 		$("#DISCO_on").click(function() { setDisco(1); });
 		$("#DISCO_off").click(function() { setDisco(0); });
+		$("#btn_rename").click(function() {
+			console.log('sending to pub nub'); 
+			console.log('channel: ' + base+"-ledState"); 
+			var newName = $("#newDeviceName").val();
+			pubnub.publish({
+	        	channel : base+"-ledState",
+    		    message : JSON.stringify({"name": newName})
+			});
+		});
+		$("#btn_resetInterval").click(function() {
+			var low = $("#timeLow").val();
+			var high = $("#timeHigh").val();
+			try {
+				low = parseInt(low);
+				high = parseInt(high);
+				if (low >= high) throw new Error("Hey that interval's not right!");
+			} catch(e) {
+				alert(e);
+			}
 
-
+			pubnub.publish({
+	        	channel : base+"-ledState",
+    		    message : JSON.stringify({"interval": {low: low, high: high}})
+			});
+		});
 	 })();</script>
   </body>
 </html>

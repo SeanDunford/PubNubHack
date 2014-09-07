@@ -3,7 +3,7 @@ const PUBKEY = "pub-c-9dc1eb9d-9b40-41f2-9245-11677f3ea28d";                // s
 const SUBKEY = "sub-c-785c37d6-3601-11e4-afa1-02ee2ddab7fe";                // set your subscribe key
 const SECRETKEY = "sec-c-ZWE4YWIwMWEtMmJkYy00ODlmLTllOTQtZGZlMjczOTM4MTcw"; // your secret key
 
-channelBase <- "231b53b236a7c9ee";
+channelBase <- split(http.agenturl(), "/").pop();
 lightLevelChannel <- channelBase + "-lightLevel";
 ledStateChannel <- channelBase + "-ledState";
 discoStateChannel <- channelBase + "-discoState"
@@ -311,11 +311,21 @@ server.log(lightLevelChannel);
 server.log(ledStateChannel);
 server.log(discoStateChannel);  
  
-//PubNumbs 
+//PubNumbs
+device.on("name", function(name) {
+     pubnub.publish(lightLevelChannel, { name = name});
+});
 device.on("light", function(lightlevel) {
     pubnub.publish(lightLevelChannel, { light = lightlevel});
-}); 
+});
+
+device.onconnect(function() {
+    server.log("Device connected!");
+    pubnub.publish(lightLevelChannel, { light = 0});
+});
+
 pubnub.subscribe([ledStateChannel], function(err, result, tt) {
+  server.log("agent ledState event from Pubnub "); 
     if(result != null && ledStateChannel in result) {
         try {
             // try grabbing the state variable from the data and send it to the device
@@ -323,10 +333,20 @@ pubnub.subscribe([ledStateChannel], function(err, result, tt) {
             if ("state" in data) {
                 device.send("led", data["state"].tointeger());
             }
+            
+            if ("name" in data) {
+                server.log("sending name");
+                device.send("name", data["name"]);
+            }
+            
+            if ("interval" in data) {
+                server.log("interval!" + data["interval"]);
+                device.send("interval", data["interval"]);
+            }
         } catch(ex) {
             // log any errors we get
-            server.log("Error - " + ex);
-        }            
+            server.log("Error - " + ex + result[ledStateChannel]);
+        }
     }
 });
 device.on("disco", function(mode) {
@@ -346,30 +366,27 @@ pubnub.subscribe([discoStateChannel], function(err, result, tt) {
         }            
     }
 });
-device.on("btnPress", function(){
-  pubnub.publish(btnPressChannel, {});
-};
-device.on("timesUp", function(){
-  pubnub.publish(timerExpiredChannel, {});
-});
 //HTTP Stuff 
 function requestHandler(request, response) {
   try {
     if ("led" in request.query) {
       if (request.query.led == "1" || request.query.led == "0") {
         local ledState = request.query.led.tointeger();
-        device.send("led", ledState); 
+        device.send("led", ledState);
       }
     }
     else if("disco" in request.query){
-        local discoState = request.query.disco.tointeger(); 
-        device.send("disco", discoState); 
-    } 
+        local discoState = request.query.disco.tointeger();
+        device.send("disco", discoState);
+    }
+
+
+
      response.send(200, "OK");
   } catch (ex) {
     response.send(500, "Internal Server Error: " + ex);
   }
 }
- 
+
 // register the HTTP handler
 http.onrequest(requestHandler);

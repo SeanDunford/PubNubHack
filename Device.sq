@@ -3,11 +3,10 @@ led <- hardware.pin9;
 led.configure(DIGITAL_OUT);
 discoMode <- false
 ledState <- 0
-
 runTime <- 0.5
 startTime <- "8am"
 endTime <- "8pm"
-interval <- 5000
+interval <- 50000
 reminderInterval <- "2secs"
 currentHour <- 0
 beginHour <-0
@@ -19,6 +18,20 @@ repeat <- true
 states <- ["initRun", 
           "checkTimes", 
           "timerOver"]
+
+settings <- {};
+settings.name <- hardware.getdeviceid();
+settings.interval <- {};
+settings.interval.low <- 7;
+settings.interval.high <- 23;
+discoMode <- false
+local _settings = server.load();
+
+if (_settings.len() != 0)
+{
+    settings = _settings;
+}
+
 
 function run(){
   if(runState == 0){initRun(); }
@@ -49,7 +62,7 @@ function checkTimers(){
   lastTime = hardware.millis(); 
   if(lastTime >= nextTime){
     server.log("event time has passed");
-    agent.send("timesUp");  
+    // agent.send("timesUp");  
     nextTime = lastTime + interval;
     runState = 2; 
   }
@@ -65,16 +78,17 @@ function timerOver(){
 
 function buttonPress(){
     local btnState = button.read(); 
-    if (btnState == 1){server.log("btn Release");} 
+    if (btnState == 1){
+        server.log("btn Release");
+        agent.send("button", "released, yo!");
+        initRun(); 
+    } 
     else{
         server.log("btn Presssed");
-        agent.send("btnPress"); 
-        initRun(); 
     }
 }
 function setLed(ledState) {
   led.write(ledState);
-   agent.send("light", ledState);
 }
 function flipLed(){
     ledState = 1-ledState; 
@@ -83,12 +97,11 @@ function flipLed(){
 function setMode (mode){discoMode = mode;}
 function disco(){
     if(discoMode){
-      flipLed(); 
+        flipLed(); 
     } 
     imp.wakeup(0.1, disco); 
 }
-disco(); 
-run(); 
+
 // register a handler for "led" messages from the agent
 agent.on("led", function(ledstate) {
     setLed(ledstate); 
@@ -96,4 +109,39 @@ agent.on("led", function(ledstate) {
 agent.on("disco", function(disco){
     setMode(disco);
 });
+// register a handler for "led" messages from the agent
+agent.on("name", function(name) {
+    server.log("renamed: " + name);
+    settings.name = name;
+    local err = server.save(settings);
+    if (err == 0)
+    {
+        server.log("Settings saved");
+    }
+    else
+    {
+        server.log("Settings not saved. Error: " + err.tostring());
+    }
+    agent.send("name", settings.name);
+});
+agent.on("interval", function(data) {
+    if (!("interval" in settings)) {
+        settings.interval <- {};
+    }
+    settings.interval = data;
+    local err = server.save(settings);
+    if (err == 0)
+    {
+        server.log("Settings saved");
+    }
+    else
+    {
+        server.log("Settings not saved. Error: " + err.tostring());
+    }
+    //agent.send("intervalreset", settings.interval);
+});
+
+disco(); 
+run(); 
+agent.send("name", settings.name);
 button.configure(DIGITAL_IN_PULLUP, buttonPress); 
