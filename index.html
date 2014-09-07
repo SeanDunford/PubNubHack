@@ -39,11 +39,12 @@
 		<button type="button" class="btn btn-default" id="btn_rename">Rename</button> 
 		
 	</div>
-	<!--<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
-		<input type="number" id="timeLow" min="0" max="24"/>
-		<input type="number" id="timeHigh" min="0" max="24"/>
+	<div>
+		<input type="number" id="timeLow" min="0" max="24" value="start"/>
+		<input type="number" id="timeHigh" min="0" max="24" value="stop"/>
+		<input type="number" id="itime" value="Interval (seconds)" />
 		<button type="button" class="btn btn-default" id="btn_resetInterval">Reset</button> 
-	</div>-->
+	</div>
 
 	<div style="text-align:center;">
 	<!--<div style="position: absolute; top: 30%; width: 100%; text-align:center;">
@@ -62,7 +63,7 @@
 	<script>(function(){
 		var mihai = '3462UPQXhaDg'; 
 		var sean =  '4LRXkfNfpRY-'; 
-		var base = sean; 
+		var base = mihai; 
 		function setLightDisplay(bg, color, text) {
 			$("#lightlevel").css("background-color", bg);
 			$("#lightlevel").css("color", color);
@@ -76,7 +77,9 @@
     	pubnub.subscribe({
         	channel : base+"-name",
 	        message : function(m){ 
-	        	var json = JSON.parse(m); 
+	        	if (typeof m == 'string')
+	        		m = JSON.parse(m); 
+	        	var json = m;
 	        	console.log('json'); 
 	        	console.log(json);
 	        	if (json.disconnect) {
@@ -134,9 +137,11 @@
 		$("#btn_resetInterval").click(function() {
 			var low = $("#timeLow").val();
 			var high = $("#timeHigh").val();
+			var itime = $("#itime").val();
 			try {
 				low = parseInt(low);
 				high = parseInt(high);
+				itime = parseInt(itime) * 1000;
 				if (low >= high) throw new Error("Hey that interval's not right!");
 			} catch(e) {
 				alert(e);
@@ -144,7 +149,7 @@
 
 			pubnub.publish({
 	        	channel : base+"-ledState",
-    		    message : JSON.stringify({"interval": {low: low, high: high}})
+    		    message : JSON.stringify({"interval": {low: low, high: high, itime: itime}})
 			});
 		});
 	 })();</script>
