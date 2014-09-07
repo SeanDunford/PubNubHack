@@ -1,5 +1,5 @@
-button <- hardware.pin1
-led <- hardware.pin9;
+button <- hardware.pin2
+led <- hardware.pin1;
 led.configure(DIGITAL_OUT);
 discoMode <- false
 ledState <- 0
@@ -15,8 +15,8 @@ runState <- 0
 lastTime <- 0
 nextTime <- 1
 repeat <- true
-states <- ["initRun", 
-          "checkTimes", 
+states <- ["initRun",
+          "checkTimes",
           "timerOver"]
 
 settings <- {};
@@ -41,71 +41,71 @@ function run(){
     server.log("fuck");
   }
   flipLed();
-  imp.wakeup(runTime, run); 
+  imp.wakeup(runTime, run);
 }
 function initRun(){
-  lastTime = hardware.millis(); 
-  nextTime = lastTime + interval; 
-  currentHour = date().hour; 
+  lastTime = hardware.millis();
+  nextTime = lastTime + interval;
+  currentHour = date().hour;
   startTime = 16; //8am PST == 4pm UTC (the same day)
   endTime = 4;   //8pm PST == 4am UTC (the next day)
-  runState = 1; 
+  runState = 1;
   if(currentHour < startTime &&
     currentHour > endTime){
-    server.log("Timer only runs between the hours of " + startTime + " and " + endTime); 
-    runState = 0; 
-    return; 
+    server.log("Timer only runs between the hours of " + startTime + " and " + endTime);
+    runState = 0;
+    return;
   }
-  runState =1; 
+  runState =1;
 }
 function checkTimers(){
-  lastTime = hardware.millis(); 
+  lastTime = hardware.millis();
   if(lastTime >= nextTime){
     server.log("event time has passed");
-    // agent.send("timesUp");  
+    // agent.send("timesUp");
     nextTime = lastTime + interval;
-    runState = 2; 
+    runState = 2;
   }
 }
 function timerOver(){
   // if(someShit(0)){
-  //     runState = 1;     
+  //     runState = 1;
   // }
   if(repeat){
-      runState = 1;     
+      runState = 1;
   }
 }
 
 function buttonPress(){
-    local btnState = button.read(); 
+    local btnState = button.read();
     if (btnState == 1){
         server.log("btn Release");
         agent.send("button", "released, yo!");
-        initRun(); 
-    } 
+        initRun();
+    }
     else{
         server.log("btn Presssed");
     }
 }
 function setLed(ledState) {
-  led.write(ledState);
+  //led.write(ledState);
 }
 function flipLed(){
-    ledState = 1-ledState; 
+    ledState = 1-ledState;
     setLed(ledState)
 }
 function setMode (mode){discoMode = mode;}
 function disco(){
     if(discoMode){
-        flipLed(); 
-    } 
-    imp.wakeup(0.1, disco); 
+        flipLed();
+    }
+    imp.wakeup(0.1, disco);
 }
 
 // register a handler for "led" messages from the agent
 agent.on("led", function(ledstate) {
-    setLed(ledstate); 
-}); 
+    setLed(ledstate);
+});
 agent.on("disco", function(disco){
     setMode(disco);
 });
@@ -141,7 +141,7 @@ agent.on("interval", function(data) {
     //agent.send("intervalreset", settings.interval);
 });
 
-disco(); 
-run(); 
+disco();
+run();
 agent.send("name", settings.name);
-button.configure(DIGITAL_IN_PULLUP, buttonPress); 
+button.configure(DIGITAL_IN_PULLUP, buttonPress);

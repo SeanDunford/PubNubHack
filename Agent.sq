@@ -10,35 +10,35 @@ discoStateChannel <- channelBase + "-discoState"
 nameChannel <- channelBase +"-name"
 
 channels <- [
-  lightLevelChannel, 
-  ledStateChannel, 
-  discoStateChannel, 
+  lightLevelChannel,
+  ledStateChannel,
+  discoStateChannel,
   nameChannel
 ]
 
 class PubNub {
     _pubNubBase = "https://pubsub.pubnub.com";
     _presenceBase = "https://pubsub.pubnub.com/v2/presence";
-    
+
     _publishKey = null;
     _subscribeKey = null;
     _secretKey = null;
     _uuid = null
-    
+
     _subscribe_request = null;
-    
+
     // Class ctor. Specify your publish key, subscribe key, secret key, and optional UUID
     // If you do not provide a UUID, the Agent ID will be used
     constructor(publishKey, subscribeKey, secretKey, uuid = null) {
         this._publishKey = publishKey;
         this._subscribeKey = subscribeKey;
         this._secretKey = secretKey;
-        
+
         if (uuid == null) uuid = split(http.agenturl(), "/").top();
         this._uuid = uuid;
     }
-    
-        
+
+
     /******************** PRIVATE FUNCTIONS (DO NOT CALL) *********************/
     function _defaultPublishCallback(err, data) {
         if (err) {
@@ -51,14 +51,14 @@ class PubNub {
             // server.log("Published data at " + data[2]);
         }
     }
-    
+
     /******************* PUBLIC MEMBER FUNCTIONS ******************************/
-    
+
     // Publish a message to a channel
     // Input:   channel (string)
-    //          data - squirrel object, will be JSON encoded 
+    //          data - squirrel object, will be JSON encoded
     //          callback (optional) - to be called when publish is complete
-    //      Callback takes two parameters: 
+    //      Callback takes two parameters:
     //          err - null if successful
     //          data - squirrel object; JSON-decoded response from server
     //              Ex: [ 1, "Sent", "14067353030261382" ]
@@ -71,24 +71,24 @@ class PubNub {
         http.get(url).sendasync(function(resp) {
             local err = null;
             local data = null;
-            
+
             // process data
             if (resp.statuscode != 200) {
                 err = format("%i - %s", resp.statuscode, resp.body);
             } else {
-                try {        
+                try {
                     data = http.jsondecode(resp.body);
                 } catch (ex) {
                     err = ex;
                 }
             }
-            
+
             // callback
             if (callback != null) callback(err, data);
             else _defaultPublishCallback(err, data);
         }.bindenv(this));
     }
-    
+
     // Subscribe to one or more channels
     // Input:
     //      channels (array) - array of channels to subscribe to
@@ -123,12 +123,12 @@ class PubNub {
             local rxchannels = null;
             local tt = null;
             local result = {};
-            
+
             // process data
             if (resp.statuscode != 200) {
                 err = format("%i - %s", resp.statuscode, resp.body);
             } else {
-                try {        
+                try {
                     data = http.jsondecode(resp.body);
                     messages = data[0];
                     tt = data[1];
@@ -138,28 +138,28 @@ class PubNub {
                         foreach (ch in rxchannels) {
                             result[ch] <- messages[chidx++]
                         }
-                    } else { 
+                    } else {
                         if (messages.len() == 0) {
                             // successfully subscribed; no data yet
                         } else  {
                             // no rxchannels, so we have to fall back on the channel we called with
                             result[channels[0]] <- messages[0];
-                        } 
+                        }
                     }
                 } catch (ex) {
                     err = ex;
                 }
             }
-            
+
             // callback
-            callback(err, result, tt);            
+            callback(err, result, tt);
 
             // re-start polling loop
             // channels and callback are still in scope because we got here with bindenv
-            this.subscribe(channels,callback,tt);            
+            this.subscribe(channels,callback,tt);
         }.bindenv(this));
     }
-    
+
     // Get historical data from a channel
     // Input:
     //      channel (string)
@@ -169,11 +169,11 @@ class PubNub {
     //          data - array of historical messages
     function history(channel, limit, callback) {
         local url = format("%s/history/%s/%s/0/%d", _pubNubBase, _subscribeKey, channel, limit);
-        
+
         http.get(url).sendasync(function(resp) {
             local err = null;
             local data = null;
-            
+
             // process data
             if (resp.statuscode != 200) {
                 err = format("%i - %s", resp.statuscode, resp.body);
@@ -183,10 +183,10 @@ class PubNub {
             callback(err, data);
         }.bindenv(this));
     }
-    
+
     // Inform Presence Server that this UUID is leaving a given channel
     // UUID will no longer be returned in results for other presence services (whereNow, hereNow, globalHereNow)
-    // Input: 
+    // Input:
     //      channel (string)
     // Return: None
     function leave(channel) {
@@ -194,14 +194,14 @@ class PubNub {
         http.get(url).sendasync(function(resp) {
             local err = null;
             local data = null;
-            
+
             if (resp.statuscode != 200) {
                 err = format("%i - %s", resp.statuscode, resp.body);
                 throw "Error Leaving Channel: "+err;
             }
         });
     }
-    
+
     // Get list of channels that this UUID is currently marked "present" on
     // UUID is "present" on channels to which it is currently subscribed or publishing
     // Input:
@@ -214,17 +214,17 @@ class PubNub {
         http.get(url).sendasync(function(resp) {
             local err = null;
             local data = null;
-        
+
             if (resp.statuscode != 200) {
                 err = format("%i - %s", resp.statuscode, resp.body);
                 throw err;
             } else {
-                try {        
+                try {
                     data = http.jsondecode(resp.body);
                     if (!("channels" in data.payload)) {
                         err = "Channel list not found: "+resp.body;
                         throw err;
-                    } 
+                    }
                     data = data.payload.channels;
                 } catch (err) {
                     callback(err,data);
@@ -233,7 +233,7 @@ class PubNub {
             }
         });
     }
-    
+
     // Get list of UUIds that are currently "present" on this channel
     // UUID is "present" on channels to which it is currently subscribed or publishing
     // Input:
@@ -242,7 +242,7 @@ class PubNub {
     //          err - null on success
     //          result - table with two entries:
     //              occupancy - number of UUIDs present on channel
-    //              uuids - array of UUIDs present on channel   
+    //              uuids - array of UUIDs present on channel
     function hereNow(channel, callback) {
         local url = format("%s/sub-key/%s/channel/%s",_presenceBase,_subscribeKey,channel);
         http.get(url).sendasync(function(resp) {
@@ -250,16 +250,16 @@ class PubNub {
             local data = null;
             local err = null;
             local result = {};
-        
+
             if (resp.statuscode != 200) {
                 err = format("%i - %s", resp.statuscode, resp.body);
                 throw err;
             } else {
-                try {        
+                try {
                     data = http.jsondecode(resp.body);
                     if (!("uuids" in data)) {
                         err = "UUID list not found: "+resp.body;
-                    } 
+                    }
                     if (!("occupancy" in data)) {
                         err = "Occpancy not found"+resp.body;
                     }
@@ -272,7 +272,7 @@ class PubNub {
             }
         });
     }
-    
+
     // Get list of UUIds that are currently "present" on this channel
     // UUID is "present" on channels to which it is currently subscribed or publishing
     // Input:
@@ -281,7 +281,7 @@ class PubNub {
     //          err - null on success
     //          result - table with two entries:
     //              occupancy - number of UUIDs present on channel
-    //              uuids - array of UUIDs present on channel       
+    //              uuids - array of UUIDs present on channel
     function globalHereNow(callback) {
         local url = format("%s/sub-key/%s",_presenceBase,_subscribeKey);
         http.get(url).sendasync(function(resp) {
@@ -289,16 +289,16 @@ class PubNub {
             local err = null;
             local data = null;
             local result = {};
-        
+
             if (resp.statuscode != 200) {
                 err = format("%i - %s", resp.statuscode, resp.body);
                 throw err;
             } else {
-                try {        
+                try {
                     data = http.jsondecode(resp.body);
                     if (!("channels" in data.payload)) {
                         err = "Channel list not found: "+resp.body.payload;
-                    } 
+                    }
                     result = data.payload.channels;
                 } catch (err) {
                     callback(err,result);
@@ -311,17 +311,20 @@ class PubNub {
 
 pubnub <- PubNub(PUBKEY, SUBKEY, SECRETKEY);
 
+deviceName <- 0;
+
 //Log Endpoints
 server.log("Turn LED On: " + http.agenturl() + "?led=int");
-server.log("set blink mode: " + http.agenturl() + "?blink=int"); 
+server.log("set blink mode: " + http.agenturl() + "?blink=int");
 server.log("lightChannel: " + lightLevelChannel);
 server.log("ledStateChannel: " + ledStateChannel);
-server.log("discoStateChannel: " + discoStateChannel);  
+server.log("discoStateChannel: " + discoStateChannel);
 server.log("nameChannel: "+nameChannel);
- 
+
 //PubNumbs
 device.on("name", function(name) {
-     pubnub.publish(lightLevelChannel, { name = name});
+    deviceName = name;
+    pubnub.publish(lightLevelChannel, { name = name});
 });
 device.on("light", function(lightlevel) {
     pubnub.publish(lightLevelChannel, { light = lightlevel});
@@ -329,10 +332,15 @@ device.on("light", function(lightlevel) {
 
 device.onconnect(function() {
     server.log("Device connected!");
-    pubnub.publish(lightLevelChannel, { light = 0});
+    // pubnub.publish(lightLevelChannel, {});
+});
+
+device.ondisconnect(function() {
+    server.log("disconnected")
+    pubnub.publish(lightLevelChannel, { name = deviceName, disconnect=1});
 });
 pubnub.subscribe(channels, function(err, result, tt){
-  server.log("i got the request"); 
+  server.log("i got the request");
     if(result != null && nameChannel in result){
       local data = http.jsondecode(result[nameChannel]);
       if ("name" in data) {
@@ -373,11 +381,11 @@ pubnub.subscribe(channels, function(err, result, tt){
             server.log("Error - " + ex);
         }
     }
-}); 
+});
 device.on("disco", function(mode) {
     pubnub.publish(discoStateChannel, { disco = discoState});
-}); 
-//HTTP Stuff 
+});
+//HTTP Stuff
 function requestHandler(request, response) {
   try {
     if ("led" in request.query) {
